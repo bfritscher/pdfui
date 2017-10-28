@@ -97,7 +97,22 @@ const actions = {
   rotate({ commit }, payload) {
     commit(types.PAGE_ROTATE, payload);
   },
-  remove({ commit }, payload) {
+  remove({ commit, state }, payload) {
+    // if isCutBefore and remove check if we need to transfer cut to following
+    if (payload.page.cutBefore && payload.remove) {
+      const pageIndex = state.pages.indexOf(payload.page);
+      if (pageIndex >= 0 && pageIndex < state.pages.length - 1) {
+        const followingPage = state.pages[pageIndex + 1];
+        if (!followingPage.cutBefore) {
+          // TODO commit as a mutation? check data initalized?
+          followingPage.data.name = payload.page.data.name;
+          commit(types.PAGE_SPLIT, {
+            page: followingPage,
+            split: true,
+          });
+        }
+      }
+    }
     commit(types.PAGE_REMOVE, payload);
   },
   split({ commit }, payload) {
