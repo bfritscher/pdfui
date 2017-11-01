@@ -7,6 +7,16 @@
             <a href="#" class="navbar-brand mr-10">PDF UI</a>
             <a href="https://github.com/bfritscher/pdfui" class="btn btn-link">GitHub</a>
           </section>
+          <section class="navbar-center">
+            <div class="input-group">
+              <span class="input-group-addon">Batch</span>
+              <input type="text" class="form-input" v-model="range">
+              <button @click="batch({action: 'rotate', params: {angle: -90}})" class="rotate-left btn btn-action input-group-btn"><i class="icon material-icons">rotate_left</i></button>
+              <button @click="batch({action: 'rotate', params: {angle: 90}})" class="rotate-right btn btn-action input-group-btn"><i class="icon material-icons">rotate_right</i></button>
+              <button @click="batch({action: 'remove', params: {remove: true}})" class="remove btn btn-action input-group-btn"><i class="icon material-icons">visibility_off</i></button>
+              <button @click="batch({action: 'remove', params: {remove: false}})" class="remove btn btn-action input-group-btn"><i class="icon material-icons">visibility</i></button>
+            </div>
+          </section>
           <section class="navbar-section">
             <button class="btn btn-primary btn-lg ml-10" :disabled="$store.state.pages.length === 0" @click="exportPdf">
               Export PDFs
@@ -57,9 +67,10 @@
 <script>
 import Dropzone from 'vue2-dropzone';
 import Draggable from 'vuedraggable';
+import { mapActions } from 'vuex';
 
 import Page from './components/Page';
-import { LIST_UPDATE, LIST_APPEND } from './store/mutation-types';
+import { LIST_UPDATE, LIST_APPEND, UPDATE_RANGE } from './store/mutation-types';
 
 export default {
   name: 'app',
@@ -72,6 +83,7 @@ export default {
     };
   },
   methods: {
+    ...mapActions(['batch']),
     uploadSuccess(file, list) {
       this.$store.commit(LIST_APPEND, list);
     },
@@ -136,6 +148,14 @@ export default {
       },
       set(value) {
         this.$store.commit(LIST_UPDATE, value);
+      },
+    },
+    range: {
+      get() {
+        return this.$store.state.range;
+      },
+      set(value) {
+        this.$store.commit(UPDATE_RANGE, value);
       },
     },
   },

@@ -1,13 +1,17 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
+import rangeToNumberArray from '@/utils';
 import * as types from './mutation-types';
+
 
 Vue.use(Vuex);
 
 // initial state
 const initialState = {
+  range: '1-n',
   pages: [
-/*    {
+    /*
+    {
       src: 'BD.pdf',
       page: 1,
       thumb: 'static/test/output-000.jpg',
@@ -84,12 +88,21 @@ const initialState = {
         name: 'BD.pdf',
       },
     },
-  */
+    */
   ],
 };
 
 // getters
-const getters = {
+const gettersDefinition = {
+  groups(state) {
+    return state.pages.reduce((groups, page, i) => {
+      if (i === 0 || page.cutBefore) {
+        groups.push([]);
+      }
+      groups[groups.length - 1].push(page);
+      return groups;
+    }, []);
+  },
 };
 
 // actions
@@ -118,6 +131,17 @@ const actions = {
   split({ commit }, payload) {
     commit(types.PAGE_SPLIT, payload);
   },
+  batch({ commit, state, getters, dispatch }, payload) {
+    getters.groups.forEach((subGroup) => {
+      const relativePages = rangeToNumberArray(state.range, subGroup.length);
+      relativePages.map(n => subGroup[n - 1]).forEach((page) => {
+        const params = Object.assign({
+          page,
+        }, payload.params);
+        dispatch(payload.action, params);
+      });
+    });
+  },
 };
 
 // mutations
@@ -138,12 +162,15 @@ const mutations = {
   [types.LIST_APPEND](state, pages) {
     state.pages = state.pages.concat(pages);
   },
+  [types.UPDATE_RANGE](state, range) {
+    state.range = range;
+  },
 };
 
 export default new Vuex.Store({
   state: initialState,
   actions,
-  getters,
+  getters: gettersDefinition,
   mutations,
   strict: true,
 });
