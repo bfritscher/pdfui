@@ -117,8 +117,10 @@ const actions = {
       if (pageIndex >= 0 && pageIndex < state.pages.length - 1) {
         const followingPage = state.pages[pageIndex + 1];
         if (!followingPage.cutBefore) {
-          // TODO commit as a mutation? check data initalized?
-          followingPage.data.name = payload.page.data.name;
+          commit(types.PAGE_RENAME, {
+            page: followingPage,
+            name: payload.page.data.name,
+          });
           commit(types.PAGE_SPLIT, {
             page: followingPage,
             split: true,
@@ -155,6 +157,12 @@ const mutations = {
   },
   [types.PAGE_SPLIT](state, payload) {
     payload.page.cutBefore = payload.split;
+  },
+  [types.PAGE_RENAME](state, payload) {
+    if (!payload.page.data) {
+      payload.page.data = {};
+    }
+    payload.page.data.name = payload.name;
   },
   [types.LIST_UPDATE](state, pages) {
     state.pages = pages;
