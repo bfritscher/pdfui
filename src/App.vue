@@ -33,8 +33,27 @@
         <p v-for="e in errors">
           <strong>{{e.type}} (row: {{e.row}}):</strong> {{e.message}}.</p>
       </div>
-      <dropzone ref="dropzone" id="myVueDropzone" url="/upload" :maxFileSizeInMB="20" :maxNumberOfFiles="26" @vdropzone-success="uploadSuccess" @vdropzone-mounted="configureDropzone"	:show-remove-link="false">
+      <ul class="tab tab-block">
+        <li class="tab-item" :class="{active: tab === 'UPLOAD'}">
+          <a href="#" @click="tab = 'UPLOAD'">Upload</a>
+        </li>
+        <li class="tab-item" :class="{active: tab === 'MAIL'}">
+          <a href="#" :class="{badge: mails.length > 0}" :data-badge="mails.length" @click="tab = 'MAIL'">Mail</a>
+        </li>
+      </ul>
+      <dropzone v-show="tab === 'UPLOAD'" ref="dropzone" id="myVueDropzone" url="/upload" :withCredentials="true" :maxFileSizeInMB="20" :maxNumberOfFiles="26" @vdropzone-success="uploadSuccess" @vdropzone-mounted="configureDropzone"	:show-remove-link="false">
       </dropzone>
+      <div class="mail-box" v-show="tab === 'MAIL'">
+        <p>Send a mail with a pdf to <a href="mailto:scan@pdf.j42.org">scan@pdf.j42.org</a> and <button @click="fetchMail('scan')" class="btn btn-primary"><i class="icon material-icons">refresh</i></button></p>
+        <div class="mails">
+          <div v-for="mail in mails" :key="mail.raw" class="page mail">
+            <button class="btn btn-lg btn-primary" @click="claim(mail)">Claim</button>
+            <img :src="`${mail.thumbsFolder}000.png`">
+            <span class="date">{{mail.date | fromNow}}</span>
+            <span class="filename" :tilte="mail.filename">{{mail.filename}}</span>
+          </div>
+        </div>
+      </div>
       <draggable class="pages" v-model="pages" :options="{draggable: '.page-box', animation: 150}">
         <page v-for="page in $store.state.pages" :key="page.src + page.page" :page="page"></page>
       </draggable>
@@ -76,14 +95,23 @@ export default {
   name: 'app',
   data() {
     return {
+      tab: 'UPLOAD',
       errors: [],
       exportFiles: [],
       zipFiles: [],
       showModal: false,
     };
   },
+  mounted() {
+    this.loadSessionData();
+    this.fetchMail('scan').then(() => {
+      if (this.mails.length > 0) {
+        this.tab = 'MAIL';
+      }
+    });
+  },
   methods: {
-    ...mapActions(['batch']),
+    ...mapActions(['batch', 'loadSessionData', 'fetchMail', 'claim']),
     uploadSuccess(file, list) {
       this.$store.commit(LIST_APPEND, list);
     },
@@ -100,23 +128,28 @@ export default {
     },
     reset() {
       this.$refs.dropzone.dropzone.removeAllFiles();
-      this.$store.commit(LIST_UPDATE, []);
+      fetch('/reset', {
+        method: 'GET',
+        credentials: 'include',
+      }).then(() => {
+        this.$store.commit(LIST_UPDATE, []);
+      });
     },
     exportPdf() {
       this.exportFiles = [];
       this.showModal = true;
       fetch('/export', {
         method: 'POST',
-        credentials: 'same-origin',
+        credentials: 'include',
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(this.$store.state.pages),
       })
-      .then((res) => {
+      .then(async (res) => {
         if (!res.ok) {
-          throw Error(res.json());
+          throw Error(await res.text());
         }
         return res.json();
       })
@@ -138,7 +171,7 @@ export default {
       form.appendChild(txt);
       document.body.appendChild(form);
       form.submit();
-      document.removeChild(form);
+      document.body.removeChild(form);
     },
   },
   computed: {
@@ -157,6 +190,9 @@ export default {
       set(value) {
         this.$store.commit(UPDATE_RANGE, value);
       },
+    },
+    mails() {
+      return this.$store.state.mails;
     },
   },
   components: {
@@ -196,6 +232,45 @@ header {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-evenly;
+}
+
+.mail-box {
+  border: 2px solid #e5e5e5;
+  padding: 7px;
+}
+
+.mails {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+}
+
+.mail {
+  overflow: hidden;
+  padding: 20px;
+  border: 1px solid;
+}
+
+.date {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: right;
+  color: white;
+  background: #5755d9;
+  padding: 1px 2px;
+}
+
+.filename {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  font-size: 80%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .dropzone .dz-preview.dz-processing .dz-progress {

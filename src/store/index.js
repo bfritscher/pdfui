@@ -9,6 +9,7 @@ Vue.use(Vuex);
 // initial state
 const initialState = {
   range: '1-n',
+  mails: [],
   pages: [
     /*
     {
@@ -107,6 +108,26 @@ const gettersDefinition = {
 
 // actions
 const actions = {
+  loadSessionData({ commit }) {
+    return fetch('/session', { credentials: 'include' }).then(r => r.json()).then(pages => commit(types.LIST_UPDATE, pages));
+  },
+  fetchMail({ commit }, to) {
+    return fetch(`/mail/${to}`, { credentials: 'include' }).then(r => r.json()).then(mails => commit(types.MAILS_SET, mails));
+  },
+  claim({ commit, dispatch }, mail) {
+    return fetch('/claim', {
+      credentials: 'include',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mail),
+    }).then(r => r.json()).then((thumbs) => {
+      commit(types.LIST_APPEND, thumbs);
+      dispatch('fetchMail', mail.to);
+    });
+  },
   rotate({ commit }, payload) {
     commit(types.PAGE_ROTATE, payload);
   },
@@ -172,6 +193,9 @@ const mutations = {
   },
   [types.UPDATE_RANGE](state, range) {
     state.range = range;
+  },
+  [types.MAILS_SET](state, mails) {
+    state.mails = mails;
   },
 };
 

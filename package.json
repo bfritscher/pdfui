@@ -15,6 +15,7 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
+    "moment": "^2.19.1",
     "spectre.css": "^0.4.5",
     "vue": "^2.5.2",
     "vue-dropzone": "^1.0.4",
