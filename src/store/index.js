@@ -197,6 +197,9 @@ const mutations = {
   [types.MAILS_SET](state, mails) {
     state.mails = mails;
   },
+  [types.MAILS_APPEND](state, mail) {
+    state.mails = state.mails.concat([mail]);
+  },
 };
 
 export default new Vuex.Store({

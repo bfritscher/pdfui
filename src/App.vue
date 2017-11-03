@@ -89,7 +89,7 @@ import Draggable from 'vuedraggable';
 import { mapActions } from 'vuex';
 
 import Page from './components/Page';
-import { LIST_UPDATE, LIST_APPEND, UPDATE_RANGE } from './store/mutation-types';
+import { LIST_UPDATE, LIST_APPEND, UPDATE_RANGE, MAILS_APPEND } from './store/mutation-types';
 
 export default {
   name: 'app',
@@ -108,6 +108,10 @@ export default {
       if (this.mails.length > 0) {
         this.tab = 'MAIL';
       }
+    });
+    const es = new EventSource('/stream');
+    es.addEventListener('scan', (event) => {
+      this.$store.commit(MAILS_APPEND, event);
     });
   },
   methods: {
