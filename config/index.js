@@ -32,6 +32,22 @@ module.exports = {
         target: 'http://localhost:8888',
         changeOrigin: true,
       },
+      '/uploads': {
+        target: 'http://localhost:8888',
+        changeOrigin: true,
+      },
+      '/session': {
+        target: 'http://localhost:8888',
+        changeOrigin: true,
+      },
+      '/stream': {
+        target: 'http://localhost:8888',
+        changeOrigin: true,
+      },
+      '/reset': {
+        target: 'http://localhost:8888',
+        changeOrigin: true,
+      },
       '/export': {
         target: 'http://localhost:8888',
         changeOrigin: true,
