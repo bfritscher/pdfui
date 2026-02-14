@@ -3,32 +3,63 @@
     <div v-if="page.cutBefore && !page.remove" class="divider-vert" data-content="CUT"></div>
     <div v-if="page.cutBefore && !page.remove" class="split-box">
       <div class="input-group">
-        <input class="form-input" placeholder="filename" type="text" v-model="page.data.name">
-        <button @click="split({page: page, split: false})" class="split-end btn btn-action btn-primary input-group-btn" ><i class="icon material-icons">content_cut</i></button>
+        <input class="form-input" placeholder="filename" type="text" v-model="page.data.name" />
+        <button
+          @click="store.split({ page, split: false })"
+          class="split-end btn btn-action btn-primary input-group-btn"
+        >
+          <i class="icon material-icons">content_cut</i>
+        </button>
       </div>
     </div>
     <div class="page">
-      <img :src="page.thumb" :class="{remove: page.remove}" :style="{ transform: 'rotate3d(0, 0, 1, ' + page.angle + 'deg)'}">
-      <button v-if="!page.cutBefore" @click="split({page: page, split: true})" class="split-start btn btn-action"><i class="icon material-icons">content_cut</i></button>
-      <button @click="rotate({page: page, angle: -90})" class="rotate-left btn btn-action"><i class="icon material-icons">rotate_left</i></button>
-      <button @click="remove({page, remove: true})" class="remove btn btn-action" v-if="!page.remove"><i class="icon material-icons">visibility_off</i></button>
-      <button @click="remove({page, remove: false})" class="remove btn btn-action" v-if="page.remove"><i class="icon material-icons">visibility</i></button>
-      <button @click="rotate({page, angle: 90})" class="rotate-right btn btn-action"><i class="icon material-icons">rotate_right</i></button>
+      <img
+        :src="page.thumb"
+        :class="{ remove: page.remove }"
+        :style="{ transform: 'rotate3d(0, 0, 1, ' + page.angle + 'deg)' }"
+      />
+      <button
+        v-if="!page.cutBefore"
+        @click="store.split({ page, split: true })"
+        class="split-start btn btn-action"
+      >
+        <i class="icon material-icons">content_cut</i>
+      </button>
+      <button @click="store.rotate({ page, angle: -90 })" class="rotate-left btn btn-action">
+        <i class="icon material-icons">rotate_left</i>
+      </button>
+      <button
+        @click="store.remove({ page, remove: true })"
+        class="remove btn btn-action"
+        v-if="!page.remove"
+      >
+        <i class="icon material-icons">visibility_off</i>
+      </button>
+      <button
+        @click="store.remove({ page, remove: false })"
+        class="remove btn btn-action"
+        v-if="page.remove"
+      >
+        <i class="icon material-icons">visibility</i>
+      </button>
+      <button @click="store.rotate({ page, angle: 90 })" class="rotate-right btn btn-action">
+        <i class="icon material-icons">rotate_right</i>
+      </button>
     </div>
   </div>
 </template>
 
-<script>
-import { mapActions } from 'vuex';
+<script setup>
+import { usePdfStore } from '@/stores'
 
-export default {
-  name: 'page',
-  props: ['page'],
-  methods: {
-    ...mapActions(['rotate', 'remove', 'split']),
+defineProps({
+  page: {
+    type: Object,
+    required: true,
   },
+})
 
-};
+const store = usePdfStore()
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
@@ -61,12 +92,14 @@ export default {
 
 .page img {
   transition: 0.3s;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2), inset 0 0 50px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 0 5px rgba(0, 0, 0, 0.2),
+    inset 0 0 50px rgba(0, 0, 0, 0.1);
   max-width: 100%;
   max-height: 100%;
 }
 
-.page img.remove{
+.page img.remove {
   opacity: 0.2;
 }
 
