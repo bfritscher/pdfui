@@ -7,7 +7,7 @@ import "express-zip";
 import { exec as execCallback } from "node:child_process";
 import { promisify } from "node:util";
 import fs from "node:fs";
-import { mkdir, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -19,6 +19,11 @@ const __dirname = path.dirname(__filename);
 const UPLOADS = path.resolve(__dirname, "uploads");
 const FRONTEND_DIST = path.resolve(__dirname, "../dist");
 const DATA_DIR = path.resolve(__dirname, "data");
+const UPLOAD_TTL_MS = Number.parseInt(process.env.UPLOAD_TTL_MS || "86400000", 10);
+const UPLOAD_CLEANUP_INTERVAL_MS = Number.parseInt(
+  process.env.UPLOAD_CLEANUP_INTERVAL_MS || "3600000",
+  10,
+);
 
 if (!fs.existsSync(UPLOADS)) {
   fs.mkdirSync(UPLOADS, { recursive: true });
@@ -77,6 +82,26 @@ function ensureSession(req) {
 async function ensureThumbsFolder(thumbsFolder) {
   if (!fs.existsSync(thumbsFolder)) {
     await mkdir(thumbsFolder, { recursive: true });
+  }
+}
+
+async function cleanupOldUploads() {
+  const now = Date.now();
+  try {
+    const entries = await readdir(UPLOADS, { withFileTypes: true });
+    await Promise.all(
+      entries
+        .filter((entry) => entry.isDirectory())
+        .map(async (entry) => {
+          const dirPath = path.join(UPLOADS, entry.name);
+          const dirStat = await stat(dirPath);
+          if (now - dirStat.mtimeMs > UPLOAD_TTL_MS) {
+            await rm(dirPath, { recursive: true, force: true });
+          }
+        }),
+    );
+  } catch (error) {
+    console.error("Uploads cleanup error", error);
   }
 }
 
@@ -278,4 +303,10 @@ if (fs.existsSync(FRONTEND_DIST)) {
 }
 
 const port = process.env.PORT || 80;
+if (UPLOAD_TTL_MS > 0 && UPLOAD_CLEANUP_INTERVAL_MS > 0) {
+  setInterval(() => {
+    void cleanupOldUploads();
+  }, UPLOAD_CLEANUP_INTERVAL_MS);
+  void cleanupOldUploads();
+}
 app.listen(port);

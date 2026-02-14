@@ -79,6 +79,36 @@ Vite proxies backend endpoints (`/session`, `/reset`, `/upload`, `/export`, `/zi
 npm run build
 ```
 
+### Docker Compose production volumes
+
+For persistent storage in production, mount these container folders:
+
+- `/app/backend/uploads` (generated uploads and thumbnails)
+- `/app/backend/data` (sqlite session database)
+
+Example:
+
+```yaml
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      SESSION_SECRET: change-me
+      UPLOAD_TTL_MS: "86400000"
+      UPLOAD_CLEANUP_INTERVAL_MS: "3600000"
+    volumes:
+      - app_uploads:/app/backend/uploads
+      - app_data:/app/backend/data
+
+volumes:
+  app_uploads:
+  app_data:
+```
+
 ### Run Unit Tests with [Vitest](https://vitest.dev/)
 
 ```sh
