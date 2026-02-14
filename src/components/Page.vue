@@ -17,6 +17,7 @@
         :src="page.thumb"
         :class="{ remove: page.remove }"
         :style="{ transform: 'rotate3d(0, 0, 1, ' + page.angle + 'deg)' }"
+        @click="emit('preview', page)"
       />
       <button
         v-if="!page.cutBefore"
@@ -60,6 +61,7 @@ defineProps({
 })
 
 const store = usePdfStore()
+const emit = defineEmits(['preview'])
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
@@ -97,6 +99,7 @@ const store = usePdfStore()
     inset 0 0 50px rgba(0, 0, 0, 0.1);
   max-width: 100%;
   max-height: 100%;
+  cursor: zoom-in;
 }
 
 .page img.remove {

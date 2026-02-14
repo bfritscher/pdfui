@@ -136,7 +136,7 @@ async function convertAndSplit(filePath, thumbsFolder) {
   const zbarPromise = scanForSplitCodes(filePath);
   const bookmarksPromise = scanForSplitBookmarks(filePath);
   await ensureThumbsFolder(thumbsFolder);
-  await exec(`convert ${filePath} -resize 300x300\\> ${thumbsFolder}/%03d.png`);
+  await exec(`convert ${filePath} -resize 600x600\\> ${thumbsFolder}/%03d.png`);
   const split = await zbarPromise;
   Object.assign(split, await bookmarksPromise);
   return split;

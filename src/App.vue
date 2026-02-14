@@ -60,7 +60,24 @@
       </div>
       <div ref="dropzoneElement" id="myVueDropzone" class="dropzone"></div>
       <div class="pages" ref="pagesRef">
-        <page v-for="page in dndPages" :key="page.src + page.page" :page="page"></page>
+        <page
+          v-for="page in dndPages"
+          :key="page.src + page.page"
+          :page="page"
+          @preview="openPreview"
+        ></page>
+      </div>
+    </div>
+    <div class="modal" :class="{ active: showPreviewModal }">
+      <div class="modal-overlay" @click="showPreviewModal = false"></div>
+      <div class="modal-container preview-modal-container">
+        <div class="modal-header">
+          <button class="btn btn-clear float-right" @click="showPreviewModal = false"></button>
+          <div class="modal-title">Page Preview</div>
+        </div>
+        <div class="modal-body preview-modal-body">
+          <img v-if="previewSrc" :src="previewSrc" class="preview-image" />
+        </div>
       </div>
     </div>
     <div class="modal" :class="{ active: showModal }">
@@ -110,6 +127,8 @@ const errors = ref([])
 const exportFiles = ref([])
 const zipFiles = ref([])
 const showModal = ref(false)
+const showPreviewModal = ref(false)
+const previewSrc = ref('')
 const dropzoneElement = ref(null)
 const pagesRef = ref(null)
 const dndPages = ref([])
@@ -142,6 +161,11 @@ async function reset() {
     credentials: 'include',
   })
   store.updateList([])
+}
+
+function openPreview(page) {
+  previewSrc.value = page.thumb
+  showPreviewModal.value = true
 }
 
 function postTo(action) {
@@ -301,5 +325,21 @@ header {
 
 .vue-dropzone.dropzone {
   min-height: 0;
+}
+
+.preview-modal-container {
+  max-width: 90vw;
+  width: auto;
+}
+
+.preview-modal-body {
+  max-height: 80vh;
+  overflow: auto;
+  text-align: center;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 75vh;
 }
 </style>
