@@ -9,6 +9,7 @@ import { promisify } from "node:util";
 import fs from "node:fs";
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { pagesToCommands } from "./utils/index.js";
 
@@ -141,6 +142,34 @@ async function convertAndSplit(filePath, thumbsFolder) {
   return split;
 }
 
+function nextSplitName(previousName, fallbackPrefix = "A") {
+  const current = (previousName || "").trim();
+  if (!current) {
+    return `${fallbackPrefix}0`;
+  }
+
+  const letterMatch = current.match(/^(.*?)([A-Za-z])$/);
+  if (letterMatch) {
+    const [, prefix, letter] = letterMatch;
+    if (letter === "Z") {
+      return `${prefix}A`;
+    }
+    if (letter === "z") {
+      return `${prefix}a`;
+    }
+    return `${prefix}${String.fromCharCode(letter.charCodeAt(0) + 1)}`;
+  }
+
+  const numberMatch = current.match(/^(.*?)(\d+)$/);
+  if (numberMatch) {
+    const [, prefix, number] = numberMatch;
+    const normalizedPrefix = prefix || fallbackPrefix;
+    return `${normalizedPrefix}${Number.parseInt(number, 10) + 1}`;
+  }
+
+  return `${current}1`;
+}
+
 async function addFileToSession(filename, thumbsFolder, split, req) {
   ensureSession(req);
   const files = await readdir(thumbsFolder);
@@ -148,16 +177,29 @@ async function addFileToSession(filename, thumbsFolder, split, req) {
   const char = String.fromCharCode(req.session.next);
   req.session.next += 1;
   req.session.fileMapping[char] = filename;
+  let previousSplitName = "";
 
-  const thumbs = files.map((thumbnailName, i) => ({
-    src: char,
-    page: i + 1,
-    thumb: `${webThumbsFolder}/${thumbnailName}`,
-    cutBefore: !!split[i],
-    data: split[i] ? split[i] : { name: `${char}${i}` },
-    remove: false,
-    angle: 0,
-  }));
+  const thumbs = files.map((thumbnailName, i) => {
+    const splitData = split[i] ? { ...split[i] } : null;
+
+    if (splitData && (!splitData.name || !`${splitData.name}`.trim())) {
+      splitData.name = nextSplitName(previousSplitName, char);
+    }
+
+    if (i === 0 || splitData) {
+      previousSplitName = (splitData?.name || `${char}${i}`).trim();
+    }
+
+    return {
+      src: char,
+      page: i + 1,
+      thumb: `${webThumbsFolder}/${thumbnailName}`,
+      cutBefore: !!splitData,
+      data: splitData || { name: `${char}${i}` },
+      remove: false,
+      angle: 0,
+    };
+  });
   req.session.pages = req.session.pages.concat(thumbs);
   req.session.save();
   return thumbs;
