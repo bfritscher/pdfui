@@ -10,10 +10,10 @@ jobs:
   build_deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Check out code
       
-      - uses: mr-smithers-excellent/docker-build-push@v6
+      - uses: mr-smithers-excellent/docker-build-push@v7
         name: Build & push backend Docker image
         with:
           image: pdfui

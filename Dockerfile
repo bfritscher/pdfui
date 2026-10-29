@@ -1,21 +1,21 @@
-FROM node:22-bookworm-slim AS frontend-build
+FROM node:26-slim AS frontend-build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
 RUN npm run build
 
-FROM node:22-bookworm-slim
+FROM node:26-slim
 RUN apt-get update && apt-get install -y \
   zbar-tools \
   ghostscript \
   pdftk \
   imagemagick \
   && rm -rf /var/lib/apt/lists/*
-RUN sed -i '/disable ghostscript format types/,+6d' /etc/ImageMagick-6/policy.xml
-RUN sed -i 's/<policy domain="resource" name="memory" value="256MiB"\/>/<policy domain="resource" name="memory" value="1GiB"\/>/' /etc/ImageMagick-6/policy.xml
-RUN sed -i 's/<policy domain="resource" name="map" value="512MiB"\/>/<policy domain="resource" name="map" value="1GiB"\/>/' /etc/ImageMagick-6/policy.xml
-
+RUN policy_file=$(find /etc -path '*ImageMagick*/policy.xml' 2>/dev/null | head -n1); \
+    if [ -n "$policy_file" ] && grep -q 'disable ghostscript format types' "$policy_file"; then \
+        sed -i '/disable ghostscript format types/,+6d' "$policy_file"; \
+    fi
 WORKDIR /app/backend
 COPY backend/package*.json ./
 RUN npm install --omit=dev
